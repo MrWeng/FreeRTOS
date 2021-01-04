@@ -1,7 +1,10 @@
 ..\..\output\main.o: ..\..\User\main.c
+..\..\output\main.o: ..\..\FreeRTOS\include\FreeRTOS.h
+..\..\output\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+..\..\output\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+..\..\output\main.o: ..\..\User\FreeRTOSConfig.h
 ..\..\output\main.o: ..\..\Libraries\CMSIS\stm32f10x.h
 ..\..\output\main.o: ..\..\Libraries\CMSIS\core_cm3.h
-..\..\output\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 ..\..\output\main.o: ..\..\Libraries\CMSIS\system_stm32f10x.h
 ..\..\output\main.o: ..\..\User\stm32f10x_conf.h
 ..\..\output\main.o: ..\..\Libraries\FWlib\inc\stm32f10x_adc.h
@@ -28,10 +31,6 @@
 ..\..\output\main.o: ..\..\Libraries\FWlib\inc\stm32f10x_usart.h
 ..\..\output\main.o: ..\..\Libraries\FWlib\inc\stm32f10x_wwdg.h
 ..\..\output\main.o: ..\..\Libraries\FWlib\inc\misc.h
-..\..\output\main.o: ..\..\User\led\bsp_led.h
-..\..\output\main.o: ..\..\FreeRTOS\include\FreeRTOS.h
-..\..\output\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
-..\..\output\main.o: ..\..\User\FreeRTOSConfig.h
 ..\..\output\main.o: ..\..\User\usart\bsp_usart.h
 ..\..\output\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 ..\..\output\main.o: ..\..\FreeRTOS\include\projdefs.h
@@ -41,3 +40,4 @@
 ..\..\output\main.o: ..\..\FreeRTOS\include\mpu_wrappers.h
 ..\..\output\main.o: ..\..\FreeRTOS\include\task.h
 ..\..\output\main.o: ..\..\FreeRTOS\include\list.h
+..\..\output\main.o: ..\..\User\led\bsp_led.h
