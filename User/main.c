@@ -26,6 +26,7 @@
 /* 开发板硬件bsp头文件 */
 #include "bsp_led.h"
 #include "bsp_usart.h"
+#include "bsp_key.h"
 
 /**************************** 任务句柄 ********************************/
 /* 
@@ -36,7 +37,8 @@
  /* 创建任务句柄 */
 static TaskHandle_t AppTaskCreate_Handle = NULL;
 /* LED任务句柄 */
-static TaskHandle_t LED_Task_Handle = NULL;
+static TaskHandle_t LED_Task_Handle = NULL;/* LED任务句柄 */
+static TaskHandle_t KEY_Task_Handle = NULL;/* KEY任务句柄 */
 
 /********************************** 内核对象句柄 *********************************/
 /*
@@ -65,6 +67,7 @@ static TaskHandle_t LED_Task_Handle = NULL;
 static void AppTaskCreate(void);/* 用于创建任务 */
 
 static void LED_Task(void* pvParameters);/* LED_Task任务实现 */
+static void KEY_Task(void* pvParameters);/* KEY_Task任务实现 */
 
 static void BSP_Init(void);/* 用于初始化板载相关资源 */
 
@@ -121,6 +124,15 @@ static void AppTaskCreate(void)
                         (TaskHandle_t*  )&LED_Task_Handle);/* 任务控制块指针 */
   if(pdPASS == xReturn)
     printf("创建LED_Task任务成功!\r\n");
+  /* 创建KEY_Task任务 */
+  xReturn = xTaskCreate((TaskFunction_t )KEY_Task,  /* 任务入口函数 */
+                        (const char*    )"KEY_Task",/* 任务名字 */
+                        (uint16_t       )512,  /* 任务栈大小 */
+                        (void*          )NULL,/* 任务入口函数参数 */
+                        (UBaseType_t    )3, /* 任务的优先级 */
+                        (TaskHandle_t*  )&KEY_Task_Handle);/* 任务控制块指针 */ 
+  if(pdPASS == xReturn)
+    printf("创建KEY_Task任务成功!\r\n");
   
   vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
   
@@ -149,6 +161,32 @@ static void LED_Task(void* parameter)
     }
 }
 
+
+/**********************************************************************
+  * @ 函数名  ： KEY_Task
+  * @ 功能说明： KEY_Task任务主体
+  * @ 参数    ：   
+  * @ 返回值  ： 无
+  ********************************************************************/
+static void KEY_Task(void* parameter)
+{	
+  while (1)
+  {
+    if( Key_Scan(KEY1_GPIO_PORT,KEY1_GPIO_PIN) == KEY_ON )
+    {/* K1 被按下 */
+      printf("挂起LED任务！\n");
+      vTaskSuspend(LED_Task_Handle);/* 挂起LED任务 */
+      printf("挂起LED任务成功！\n");
+    } 
+    if( Key_Scan(KEY2_GPIO_PORT,KEY2_GPIO_PIN) == KEY_ON )
+    {/* K2 被按下 */
+      printf("恢复LED任务！\n");
+      vTaskResume(LED_Task_Handle);/* 恢复LED任务！ */
+      printf("恢复LED任务成功！\n");
+    }
+    vTaskDelay(20);/* 延时20个tick */
+  }
+}
 /***********************************************************************
   * @ 函数名  ： BSP_Init
   * @ 功能说明： 板级外设初始化，所有板子上的初始化均可放在这个函数里面
