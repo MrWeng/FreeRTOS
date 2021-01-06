@@ -149,14 +149,19 @@ static void AppTaskCreate(void)
   ********************************************************************/
 static void LED_Task(void* parameter)
 {	
+	static TickType_t pxPreviousWakeTime;					//当前唤醒时间
+	const TickType_t xTimeIncrement = pdMS_TO_TICKS(500);	//周期时间段
+	pxPreviousWakeTime = xTaskGetTickCount();
     while (1)
     {
+		vTaskDelayUntil(&pxPreviousWakeTime,xTimeIncrement);
         LED1_ON;
-        vTaskDelay(500);   /* 延时500个tick */
+//        vTaskDelay(500);   /* 延时500个tick */
         printf("LED_Task Running,LED1_ON\r\n");
-        
+		
+        vTaskDelayUntil(&pxPreviousWakeTime,xTimeIncrement);
         LED1_OFF;     
-        vTaskDelay(500);   /* 延时500个tick */		 		
+//        vTaskDelay(500);   /* 延时500个tick */		 		
         printf("LED_Task Running,LED1_OFF\r\n");
     }
 }
