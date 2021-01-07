@@ -702,7 +702,7 @@ I (..\..\Libraries\FWlib\inc\stm32f10x_spi.h)(0x57C78855)
 I (..\..\Libraries\FWlib\inc\stm32f10x_tim.h)(0x57C78855)
 I (..\..\Libraries\FWlib\inc\stm32f10x_usart.h)(0x57C78855)
 I (..\..\Libraries\FWlib\inc\misc.h)(0x57C78855)
-F (..\..\User\main.c)(0x5FF5B4D4)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I ..\..\Libraries\CMSIS -I ..\..\User -I ..\..\Libraries\FWlib\inc -I ..\..\User\led -I ..\..\FreeRTOS\include -I ..\..\FreeRTOS\prot\MemMang -I ..\..\FreeRTOS\prot\RVDS\ARM_CM3 -I ..\..\FreeRTOS\src -I ..\..\User\usart -I ..\..\User\key-ID:\Keil_v5\Arm\Packs\Keil\STM32F1xx_DFP\2.3.0\Device\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="533" -DSTM32F10X_HD -DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\..\output\main.o --omf_browse ..\..\output\main.crf --depend ..\..\output\main.d)
+F (..\..\User\main.c)(0x5FF7174A)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I ..\..\Libraries\CMSIS -I ..\..\User -I ..\..\Libraries\FWlib\inc -I ..\..\User\led -I ..\..\FreeRTOS\include -I ..\..\FreeRTOS\prot\MemMang -I ..\..\FreeRTOS\prot\RVDS\ARM_CM3 -I ..\..\FreeRTOS\src -I ..\..\User\usart -I ..\..\User\key-ID:\Keil_v5\Arm\Packs\Keil\STM32F1xx_DFP\2.3.0\Device\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="533" -DSTM32F10X_HD -DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\..\output\main.o --omf_browse ..\..\output\main.crf --depend ..\..\output\main.d)
 I (..\..\FreeRTOS\include\FreeRTOS.h)(0x573F3A16)
 I (D:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E2EB2)
@@ -743,6 +743,7 @@ I (..\..\FreeRTOS\prot\RVDS\ARM_CM3\portmacro.h)(0x573F3A17)
 I (..\..\FreeRTOS\include\mpu_wrappers.h)(0x573F3A16)
 I (..\..\FreeRTOS\include\task.h)(0x573F3A16)
 I (..\..\FreeRTOS\include\list.h)(0x573F3A16)
+I (..\..\FreeRTOS\include\queue.h)(0x573F3A16)
 I (..\..\User\led\bsp_led.h)(0x57C78855)
 I (..\..\User\key\bsp_key.h)(0x5C90F72C)
 F (..\..\User\stm32f10x_conf.h)(0x57C78855)()
