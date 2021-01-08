@@ -24,6 +24,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "semphr.h"
 /* 开发板硬件bsp头文件 */
 #include "bsp_led.h"
 #include "bsp_usart.h"
@@ -52,9 +53,8 @@ static TaskHandle_t Send_Task_Handle = NULL;/* KEY任务句柄 */
  * 来完成的
  * 
  */
-QueueHandle_t Test_Queue =NULL;
-#define  QUEUE_LEN    4   /* 队列的长度，最大可包含多少个消息 */
-#define  QUEUE_SIZE   4   /* 队列中每个消息大小（字节） */
+ SemaphoreHandle_t BinarySem_Handle =NULL;		//定义二值信号量句柄
+ 
 /******************************* 全局变量声明 ************************************/
 /*
  * 当我们在写应用程序的时候，可能需要用到一些全局变量。
@@ -117,11 +117,10 @@ static void AppTaskCreate(void)
   
   taskENTER_CRITICAL();           //进入临界区
   
-  /* 创建Test_Queue */
-  Test_Queue = xQueueCreate((UBaseType_t ) QUEUE_LEN,/* 消息队列的长度 */
-                            (UBaseType_t ) QUEUE_SIZE);/* 消息的大小 */
-  if(NULL != Test_Queue)
-    printf("创建Test_Queue消息队列成功!\r\n");
+  /* 创建 BinarySem */
+  BinarySem_Handle = xSemaphoreCreateBinary();	 
+  if(NULL != BinarySem_Handle)
+    printf("BinarySem_Handle二值信号量创建成功!\r\n");
   
   /* 创建Receive_Task任务 */
   xReturn = xTaskCreate((TaskFunction_t )Receive_Task, /* 任务入口函数 */
@@ -159,16 +158,14 @@ static void AppTaskCreate(void)
 static void Receive_Task(void* parameter)
 {	
   BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdTRUE */
-  uint32_t r_queue;	/* 定义一个接收消息的变量 */
   while (1)
   {
-    xReturn = xQueueReceive( Test_Queue,    /* 消息队列的句柄 */
-                             &r_queue,      /* 发送的消息内容 */
-                             portMAX_DELAY); /* 等待时间 一直等 */
+        //获取二值信号量 xSemaphore,没获取到则一直等待
+		xReturn = xSemaphoreTake(BinarySem_Handle,/* 二值信号量句柄 */
+                              portMAX_DELAY); /* 等待时间 */
     if(pdTRUE == xReturn)
-      printf("本次接收到的数据是%d\n\n",r_queue);
-    else
-      printf("数据接收出错,错误代码0x%lx\n",xReturn);
+      printf("BinarySem_Handle二值信号量获取成功!\n\n");
+		LED1_TOGGLE;
   }
 }
 
@@ -181,29 +178,27 @@ static void Receive_Task(void* parameter)
 static void Send_Task(void* parameter)
 {	 
   BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
-  uint32_t send_data1 = 1;
-  uint32_t send_data2 = 2;
   while (1)
   {
+     /* K1 被按下 */
     if( Key_Scan(KEY1_GPIO_PORT,KEY1_GPIO_PIN) == KEY_ON )
-    {/* K1 被按下 */
-      printf("发送消息send_data1！\n");
-      xReturn = xQueueSend( Test_Queue, /* 消息队列的句柄 */
-                            &send_data1,/* 发送的消息内容 */
-                            0 );        /* 等待时间 0 */
-      if(pdPASS == xReturn)
-        printf("消息send_data1发送成功!\n\n");
+    {
+      xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量
+      if( xReturn == pdTRUE )
+        printf("BinarySem_Handle二值信号量释放成功!\r\n");
+      else
+        printf("BinarySem_Handle二值信号量释放失败!\r\n");
     } 
+    /* K2 被按下 */
     if( Key_Scan(KEY2_GPIO_PORT,KEY2_GPIO_PIN) == KEY_ON )
-    {/* K2 被按下 */
-      printf("发送消息send_data2！\n");
-      xReturn = xQueueSend( Test_Queue, /* 消息队列的句柄 */
-                            &send_data2,/* 发送的消息内容 */
-                            0 );        /* 等待时间 0 */
-      if(pdPASS == xReturn)
-        printf("消息send_data2发送成功!\n\n");
+    {
+      xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量
+      if( xReturn == pdTRUE )
+        printf("BinarySem_Handle二值信号量释放成功!\r\n");
+      else
+        printf("BinarySem_Handle二值信号量释放失败!\r\n");
     }
-    vTaskDelay(20);/* 延时20个tick */
+    vTaskDelay(20);
   }
 }
 /***********************************************************************
