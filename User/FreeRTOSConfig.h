@@ -162,13 +162,13 @@
 #define configUSE_TASK_NOTIFICATIONS    1   
 
 //使用互斥信号量
-#define configUSE_MUTEXES						    0    
+#define configUSE_MUTEXES					  0    
 
 //使用递归互斥信号量                                            
 #define configUSE_RECURSIVE_MUTEXES			0   
 
 //为1时使用计数信号量
-#define configUSE_COUNTING_SEMAPHORES		0
+#define configUSE_COUNTING_SEMAPHORES		1
 
 /* 设置可以注册的信号量和消息队列个数 */
 #define configQUEUE_REGISTRY_SIZE				10                                 
@@ -180,7 +180,7 @@
               FreeRTOS与内存申请有关配置选项                                               
 *****************************************************************/
 //支持动态内存申请
-#define configSUPPORT_DYNAMIC_ALLOCATION        1    
+#define configSUPPORT_DYNAMIC_ALLOCATION     	1 
 //支持静态内存
 #define configSUPPORT_STATIC_ALLOCATION			0					
 //系统所有总的堆大小

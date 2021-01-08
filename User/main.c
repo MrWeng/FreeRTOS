@@ -4,11 +4,11 @@
   * @author  fire
   * @version V1.0
   * @date    2018-xx-xx
-  * @brief   FreeRTOS v9.0.0 + STM32 动态创建任务
+  * @brief   FreeRTOS V9.0.0 + STM32 计数信号量实验
   *********************************************************************
   * @attention
   *
-  * 实验平台:野火 STM32全系列开发板 
+  * 实验平台:野火STM32全系列开发板 
   * 论坛    :http://www.firebbs.cn
   * 淘宝    :https://fire-stm32.taobao.com
   *
@@ -29,18 +29,15 @@
 #include "bsp_led.h"
 #include "bsp_usart.h"
 #include "bsp_key.h"
-
 /**************************** 任务句柄 ********************************/
 /* 
  * 任务句柄是一个指针，用于指向一个任务，当任务创建好之后，它就具有了一个任务句柄
  * 以后我们要想操作这个任务都需要通过这个任务句柄，如果是自身的任务操作自己，那么
  * 这个句柄可以为NULL。
  */
- /* 创建任务句柄 */
-static TaskHandle_t AppTaskCreate_Handle = NULL;
-
-static TaskHandle_t Receive_Task_Handle = NULL;/* LED任务句柄 */
-static TaskHandle_t Send_Task_Handle = NULL;/* KEY任务句柄 */
+static TaskHandle_t AppTaskCreate_Handle = NULL;/* 创建任务句柄 */
+static TaskHandle_t Take_Task_Handle = NULL;/* Take_Task任务句柄 */
+static TaskHandle_t Give_Task_Handle = NULL;/* Give_Task任务句柄 */
 
 /********************************** 内核对象句柄 *********************************/
 /*
@@ -53,11 +50,17 @@ static TaskHandle_t Send_Task_Handle = NULL;/* KEY任务句柄 */
  * 来完成的
  * 
  */
- SemaphoreHandle_t BinarySem_Handle =NULL;		//定义二值信号量句柄
- 
+SemaphoreHandle_t CountSem_Handle =NULL;
+
 /******************************* 全局变量声明 ************************************/
 /*
  * 当我们在写应用程序的时候，可能需要用到一些全局变量。
+ */
+
+
+/******************************* 宏定义 ************************************/
+/*
+ * 当我们在写应用程序的时候，可能需要用到一些宏定义。
  */
 
 
@@ -68,8 +71,8 @@ static TaskHandle_t Send_Task_Handle = NULL;/* KEY任务句柄 */
 */
 static void AppTaskCreate(void);/* 用于创建任务 */
 
-static void Receive_Task(void* pvParameters);/* Receive_Task任务实现 */
-static void Send_Task(void* pvParameters);/* Send_Task任务实现 */
+static void Take_Task(void* pvParameters);/* Take_Task任务实现 */
+static void Give_Task(void* pvParameters);/* Give_Task任务实现 */
 
 static void BSP_Init(void);/* 用于初始化板载相关资源 */
 
@@ -84,11 +87,14 @@ static void BSP_Init(void);/* 用于初始化板载相关资源 */
 int main(void)
 {	
   BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
-
+  
   /* 开发板硬件初始化 */
   BSP_Init();
-  printf("这是一个[野火]-STM32全系列开发板-FreeRTOS-动态创建任务!\r\n");
-   /* 创建AppTaskCreate任务 */
+  
+  printf("这是一个[野火]-STM32全系列开发板-FreeRTOS计数信号量实验！\n");
+  printf("车位默认值为5个，按下KEY1申请车位，按下KEY2释放车位！\n\n");
+  
+  /* 创建AppTaskCreate任务 */
   xReturn = xTaskCreate((TaskFunction_t )AppTaskCreate,  /* 任务入口函数 */
                         (const char*    )"AppTaskCreate",/* 任务名字 */
                         (uint16_t       )512,  /* 任务栈大小 */
@@ -117,30 +123,30 @@ static void AppTaskCreate(void)
   
   taskENTER_CRITICAL();           //进入临界区
   
-  /* 创建 BinarySem */
-  BinarySem_Handle = xSemaphoreCreateBinary();	 
-  if(NULL != BinarySem_Handle)
-    printf("BinarySem_Handle二值信号量创建成功!\r\n");
-  
-  /* 创建Receive_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )Receive_Task, /* 任务入口函数 */
-                        (const char*    )"Receive_Task",/* 任务名字 */
+  /* 创建Test_Queue */
+  CountSem_Handle = xSemaphoreCreateCounting(5,5);	 
+  if(NULL != CountSem_Handle)
+    printf("CountSem_Handle计数信号量创建成功!\r\n");
+
+  /* 创建Take_Task任务 */
+  xReturn = xTaskCreate((TaskFunction_t )Take_Task, /* 任务入口函数 */
+                        (const char*    )"Take_Task",/* 任务名字 */
                         (uint16_t       )512,   /* 任务栈大小 */
                         (void*          )NULL,	/* 任务入口函数参数 */
                         (UBaseType_t    )2,	    /* 任务的优先级 */
-                        (TaskHandle_t*  )&Receive_Task_Handle);/* 任务控制块指针 */
+                        (TaskHandle_t*  )&Take_Task_Handle);/* 任务控制块指针 */
   if(pdPASS == xReturn)
-    printf("创建Receive_Task任务成功!\r\n");
+    printf("创建Take_Task任务成功!\r\n");
   
-  /* 创建Send_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )Send_Task,  /* 任务入口函数 */
-                        (const char*    )"Send_Task",/* 任务名字 */
+  /* 创建Give_Task任务 */
+  xReturn = xTaskCreate((TaskFunction_t )Give_Task,  /* 任务入口函数 */
+                        (const char*    )"Give_Task",/* 任务名字 */
                         (uint16_t       )512,  /* 任务栈大小 */
                         (void*          )NULL,/* 任务入口函数参数 */
                         (UBaseType_t    )3, /* 任务的优先级 */
-                        (TaskHandle_t*  )&Send_Task_Handle);/* 任务控制块指针 */ 
+                        (TaskHandle_t*  )&Give_Task_Handle);/* 任务控制块指针 */ 
   if(pdPASS == xReturn)
-    printf("创建Send_Task任务成功!\n\n");
+    printf("创建Give_Task任务成功!\n\n");
   
   vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
   
@@ -150,55 +156,55 @@ static void AppTaskCreate(void)
 
 
 /**********************************************************************
-  * @ 函数名  ： Receive_Task
-  * @ 功能说明： Receive_Task任务主体
+  * @ 函数名  ： Take_Task
+  * @ 功能说明： Take_Task任务主体
   * @ 参数    ：   
   * @ 返回值  ： 无
   ********************************************************************/
-static void Receive_Task(void* parameter)
+static void Take_Task(void* parameter)
 {	
-  BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdTRUE */
+  BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
+  /* 任务都是一个无限循环，不能返回 */
   while (1)
   {
-        //获取二值信号量 xSemaphore,没获取到则一直等待
-		xReturn = xSemaphoreTake(BinarySem_Handle,/* 二值信号量句柄 */
-                              portMAX_DELAY); /* 等待时间 */
-    if(pdTRUE == xReturn)
-      printf("BinarySem_Handle二值信号量获取成功!\n\n");
-		LED1_TOGGLE;
+    //如果KEY1被单击
+		if( Key_Scan(KEY1_GPIO_PORT,KEY1_GPIO_PIN) == KEY_ON )       
+		{
+			/* 获取一个计数信号量 */
+      xReturn = xSemaphoreTake(CountSem_Handle,	/* 计数信号量句柄 */
+                             0); 	/* 等待时间：0 */
+			if ( pdTRUE == xReturn ) 
+				printf( "KEY1被按下，成功申请到停车位。\n" );
+			else
+				printf( "KEY1被按下，不好意思，现在停车场已满！\n" );							
+		}
+		vTaskDelay(20);     //每20ms扫描一次		
   }
 }
 
 /**********************************************************************
-  * @ 函数名  ： Send_Task
-  * @ 功能说明： Send_Task任务主体
+  * @ 函数名  ： Give_Task
+  * @ 功能说明： Give_Task任务主体
   * @ 参数    ：   
   * @ 返回值  ： 无
   ********************************************************************/
-static void Send_Task(void* parameter)
+static void Give_Task(void* parameter)
 {	 
-  BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+  BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
+  /* 任务都是一个无限循环，不能返回 */
   while (1)
   {
-     /* K1 被按下 */
-    if( Key_Scan(KEY1_GPIO_PORT,KEY1_GPIO_PIN) == KEY_ON )
-    {
-      xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量
-      if( xReturn == pdTRUE )
-        printf("BinarySem_Handle二值信号量释放成功!\r\n");
-      else
-        printf("BinarySem_Handle二值信号量释放失败!\r\n");
-    } 
-    /* K2 被按下 */
-    if( Key_Scan(KEY2_GPIO_PORT,KEY2_GPIO_PIN) == KEY_ON )
-    {
-      xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量
-      if( xReturn == pdTRUE )
-        printf("BinarySem_Handle二值信号量释放成功!\r\n");
-      else
-        printf("BinarySem_Handle二值信号量释放失败!\r\n");
-    }
-    vTaskDelay(20);
+    //如果KEY2被单击
+		if( Key_Scan(KEY2_GPIO_PORT,KEY2_GPIO_PIN) == KEY_ON )       
+		{
+			/* 获取一个计数信号量 */
+      xReturn = xSemaphoreGive(CountSem_Handle);//给出计数信号量                  
+			if ( pdTRUE == xReturn ) 
+				printf( "KEY2被按下，释放1个停车位。\n" );
+			else
+				printf( "KEY2被按下，但已无车位可以释放！\n" );							
+		}
+		vTaskDelay(20);     //每20ms扫描一次	
   }
 }
 /***********************************************************************
@@ -218,10 +224,15 @@ static void BSP_Init(void)
 	
 	/* LED 初始化 */
 	LED_GPIO_Config();
+	
+	/* 按键初始化	*/
+  Key_GPIO_Config();
 
 	/* 串口初始化	*/
 	USART_Config();
   
+
+
 }
 
 /********************************END OF FILE****************************/
