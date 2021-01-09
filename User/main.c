@@ -36,8 +36,9 @@
  * 这个句柄可以为NULL。
  */
 static TaskHandle_t AppTaskCreate_Handle = NULL;/* 创建任务句柄 */
-static TaskHandle_t Take_Task_Handle = NULL;/* Take_Task任务句柄 */
-static TaskHandle_t Give_Task_Handle = NULL;/* Give_Task任务句柄 */
+static TaskHandle_t LowPriority_Task_Handle = NULL;/* LowPriority_Task任务句柄 */
+static TaskHandle_t MidPriority_Task_Handle = NULL;/* MidPriority_Task任务句柄 */
+static TaskHandle_t HighPriority_Task_Handle = NULL;/* HighPriority_Task任务句柄 */
 
 /********************************** 内核对象句柄 *********************************/
 /*
@@ -50,7 +51,7 @@ static TaskHandle_t Give_Task_Handle = NULL;/* Give_Task任务句柄 */
  * 来完成的
  * 
  */
-SemaphoreHandle_t CountSem_Handle =NULL;
+SemaphoreHandle_t MuxSem_Handle =NULL;
 
 /******************************* 全局变量声明 ************************************/
 /*
@@ -71,8 +72,9 @@ SemaphoreHandle_t CountSem_Handle =NULL;
 */
 static void AppTaskCreate(void);/* 用于创建任务 */
 
-static void Take_Task(void* pvParameters);/* Take_Task任务实现 */
-static void Give_Task(void* pvParameters);/* Give_Task任务实现 */
+static void LowPriority_Task(void* pvParameters);/* LowPriority_Task任务实现 */
+static void MidPriority_Task(void* pvParameters);/* MidPriority_Task任务实现 */
+static void HighPriority_Task(void* pvParameters);/* MidPriority_Task任务实现 */
 
 static void BSP_Init(void);/* 用于初始化板载相关资源 */
 
@@ -123,30 +125,44 @@ static void AppTaskCreate(void)
   
   taskENTER_CRITICAL();           //进入临界区
   
-  /* 创建Test_Queue */
-  CountSem_Handle = xSemaphoreCreateCounting(5,5);	 
-  if(NULL != CountSem_Handle)
-    printf("CountSem_Handle计数信号量创建成功!\r\n");
+  /* 创建MuxSem */
+  MuxSem_Handle = xSemaphoreCreateMutex();	 
+  if(NULL != MuxSem_Handle)
+    printf("MuxSem_Handle互斥量创建成功!\r\n");
 
-  /* 创建Take_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )Take_Task, /* 任务入口函数 */
-                        (const char*    )"Take_Task",/* 任务名字 */
+  xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量
+//  if( xReturn == pdTRUE )
+//    printf("释放信号量!\r\n");
+    
+  /* 创建LowPriority_Task任务 */
+  xReturn = xTaskCreate((TaskFunction_t )LowPriority_Task, /* 任务入口函数 */
+                        (const char*    )"LowPriority_Task",/* 任务名字 */
                         (uint16_t       )512,   /* 任务栈大小 */
                         (void*          )NULL,	/* 任务入口函数参数 */
                         (UBaseType_t    )2,	    /* 任务的优先级 */
-                        (TaskHandle_t*  )&Take_Task_Handle);/* 任务控制块指针 */
+                        (TaskHandle_t*  )&LowPriority_Task_Handle);/* 任务控制块指针 */
   if(pdPASS == xReturn)
-    printf("创建Take_Task任务成功!\r\n");
+    printf("创建LowPriority_Task任务成功!\r\n");
   
-  /* 创建Give_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )Give_Task,  /* 任务入口函数 */
-                        (const char*    )"Give_Task",/* 任务名字 */
+  /* 创建MidPriority_Task任务 */
+  xReturn = xTaskCreate((TaskFunction_t )MidPriority_Task,  /* 任务入口函数 */
+                        (const char*    )"MidPriority_Task",/* 任务名字 */
                         (uint16_t       )512,  /* 任务栈大小 */
                         (void*          )NULL,/* 任务入口函数参数 */
                         (UBaseType_t    )3, /* 任务的优先级 */
-                        (TaskHandle_t*  )&Give_Task_Handle);/* 任务控制块指针 */ 
+                        (TaskHandle_t*  )&MidPriority_Task_Handle);/* 任务控制块指针 */ 
   if(pdPASS == xReturn)
-    printf("创建Give_Task任务成功!\n\n");
+    printf("创建MidPriority_Task任务成功!\n");
+  
+  /* 创建HighPriority_Task任务 */
+  xReturn = xTaskCreate((TaskFunction_t )HighPriority_Task,  /* 任务入口函数 */
+                        (const char*    )"HighPriority_Task",/* 任务名字 */
+                        (uint16_t       )512,  /* 任务栈大小 */
+                        (void*          )NULL,/* 任务入口函数参数 */
+                        (UBaseType_t    )4, /* 任务的优先级 */
+                        (TaskHandle_t*  )&HighPriority_Task_Handle);/* 任务控制块指针 */ 
+  if(pdPASS == xReturn)
+    printf("创建HighPriority_Task任务成功!\n\n");
   
   vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
   
@@ -156,55 +172,77 @@ static void AppTaskCreate(void)
 
 
 /**********************************************************************
-  * @ 函数名  ： Take_Task
-  * @ 功能说明： Take_Task任务主体
+  * @ 函数名  ： LowPriority_Task
+  * @ 功能说明： LowPriority_Task任务主体
   * @ 参数    ：   
   * @ 返回值  ： 无
   ********************************************************************/
-static void Take_Task(void* parameter)
+static void LowPriority_Task(void* parameter)
 {	
-  BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
-  /* 任务都是一个无限循环，不能返回 */
+  static uint32_t i;
+  BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
   while (1)
   {
-    //如果KEY1被单击
-		if( Key_Scan(KEY1_GPIO_PORT,KEY1_GPIO_PIN) == KEY_ON )       
+    printf("LowPriority_Task 获取互斥量\n");
+    //获取互斥量 MuxSem,没获取到则一直等待
+		xReturn = xSemaphoreTake(MuxSem_Handle,/* 互斥量句柄 */
+                              portMAX_DELAY); /* 等待时间 */
+    if(pdTRUE == xReturn)
+    printf("LowPriority_Task Running\n\n");
+    
+    for(i=0;i<2000000;i++)//模拟低优先级任务占用互斥量
 		{
-			/* 获取一个计数信号量 */
-      xReturn = xSemaphoreTake(CountSem_Handle,	/* 计数信号量句柄 */
-                             0); 	/* 等待时间：0 */
-			if ( pdTRUE == xReturn ) 
-				printf( "KEY1被按下，成功申请到停车位。\n" );
-			else
-				printf( "KEY1被按下，不好意思，现在停车场已满！\n" );							
+			taskYIELD();//发起任务调度
 		}
-		vTaskDelay(20);     //每20ms扫描一次		
+    
+    printf("LowPriority_Task 释放互斥量!\r\n");
+    xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量
+      
+		LED1_TOGGLE;
+    
+    vTaskDelay(1000);
   }
 }
 
 /**********************************************************************
-  * @ 函数名  ： Give_Task
-  * @ 功能说明： Give_Task任务主体
+  * @ 函数名  ： MidPriority_Task
+  * @ 功能说明： MidPriority_Task任务主体
   * @ 参数    ：   
   * @ 返回值  ： 无
   ********************************************************************/
-static void Give_Task(void* parameter)
+static void MidPriority_Task(void* parameter)
 {	 
-  BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
-  /* 任务都是一个无限循环，不能返回 */
   while (1)
   {
-    //如果KEY2被单击
-		if( Key_Scan(KEY2_GPIO_PORT,KEY2_GPIO_PIN) == KEY_ON )       
-		{
-			/* 获取一个计数信号量 */
-      xReturn = xSemaphoreGive(CountSem_Handle);//给出计数信号量                  
-			if ( pdTRUE == xReturn ) 
-				printf( "KEY2被按下，释放1个停车位。\n" );
-			else
-				printf( "KEY2被按下，但已无车位可以释放！\n" );							
-		}
-		vTaskDelay(20);     //每20ms扫描一次	
+   printf("MidPriority_Task Running\n");
+   vTaskDelay(1000);
+  }
+}
+
+/**********************************************************************
+  * @ 函数名  ： HighPriority_Task
+  * @ 功能说明： HighPriority_Task 任务主体
+  * @ 参数    ：   
+  * @ 返回值  ： 无
+  ********************************************************************/
+static void HighPriority_Task(void* parameter)
+{	
+  BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
+  while (1)
+  {
+    printf("HighPriority_Task 获取互斥量\n");
+    //获取互斥量 MuxSem,没获取到则一直等待
+		xReturn = xSemaphoreTake(MuxSem_Handle,/* 互斥量句柄 */
+                              portMAX_DELAY); /* 等待时间 */
+    if(pdTRUE == xReturn)
+      printf("HighPriority_Task Running\n");
+		LED1_TOGGLE;
+    
+    printf("HighPriority_Task 释放互斥量!\r\n");
+    xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量
+
+  
+    vTaskDelay(1000);
   }
 }
 /***********************************************************************
