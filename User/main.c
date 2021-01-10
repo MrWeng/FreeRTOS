@@ -171,44 +171,16 @@ static void AppTaskCreate(void)
   ********************************************************************/
 static void Receive1_Task(void* parameter)
 {	
-  BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
-#if USE_CHAR
-  char *r_char;
-#else
-  uint32_t r_num;
-#endif
   while (1)
   {
-    /* BaseType_t xTaskNotifyWait(uint32_t ulBitsToClearOnEntry, 
-                                  uint32_t ulBitsToClearOnExit, 
-                                  uint32_t *pulNotificationValue, 
-                                  TickType_t xTicksToWait ); 
-     * ulBitsToClearOnEntry：当没有接收到任务通知的时候将任务通知值与此参数的取
-       反值进行按位与运算，当此参数为Oxfffff或者ULONG_MAX的时候就会将任务通知值清零。
-     * ulBits ToClearOnExit：如果接收到了任务通知，在做完相应的处理退出函数之前将
-       任务通知值与此参数的取反值进行按位与运算，当此参数为0xfffff或者ULONG MAX的时候
-       就会将任务通知值清零。
-     * pulNotification Value：此参数用来保存任务通知值。
-     * xTick ToWait：阻塞时间。
-     *
-     * 返回值：pdTRUE：获取到了任务通知。pdFALSE：任务通知获取失败。
+    /* uint32_t ulTaskNotifyTake( BaseType_t xClearCountOnExit, TickType_t xTicksToWait ); 
+     * xClearCountOnExit：pdTRUE 在退出函数的时候任务任务通知值清零，类似二值信号量
+     * pdFALSE 在退出函数ulTaskNotifyTakeO的时候任务通知值减一，类似计数型信号量。
      */
     //获取任务通知 ,没获取到则一直等待
-		xReturn=xTaskNotifyWait(0x0,			//进入函数的时候不清除任务bit
-                            ULONG_MAX,	  //退出函数的时候清除所有的bit
-#if USE_CHAR
-                            (uint32_t *)&r_char,		  //保存任务通知值
-#else
-                            &r_num,		  //保存任务通知值
-#endif                        
-                            portMAX_DELAY);	//阻塞时间
-    if( pdTRUE == xReturn )
-#if USE_CHAR
-      printf("Receive1_Task 任务通知消息为 %s \n",r_char);                      
-#else
-      printf("Receive1_Task 任务通知消息为 %d \n",r_num);                      
-#endif  
-     
+    ulTaskNotifyTake(pdTRUE,portMAX_DELAY);
+    
+    printf("Receive1_Task 任务通知获取成功!\n\n");
     
 		LED1_TOGGLE;
   }
@@ -222,43 +194,17 @@ static void Receive1_Task(void* parameter)
   ********************************************************************/
 static void Receive2_Task(void* parameter)
 {	
-  BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
-#if USE_CHAR
-  char *r_char;
-#else
-  uint32_t r_num;
-#endif
   while (1)
   {
-    /* BaseType_t xTaskNotifyWait(uint32_t ulBitsToClearOnEntry, 
-                                  uint32_t ulBitsToClearOnExit, 
-                                  uint32_t *pulNotificationValue, 
-                                  TickType_t xTicksToWait ); 
-     * ulBitsToClearOnEntry：当没有接收到任务通知的时候将任务通知值与此参数的取
-       反值进行按位与运算，当此参数为Oxfffff或者ULONG_MAX的时候就会将任务通知值清零。
-     * ulBits ToClearOnExit：如果接收到了任务通知，在做完相应的处理退出函数之前将
-       任务通知值与此参数的取反值进行按位与运算，当此参数为0xfffff或者ULONG MAX的时候
-       就会将任务通知值清零。
-     * pulNotification Value：此参数用来保存任务通知值。
-     * xTick ToWait：阻塞时间。
-     *
-     * 返回值：pdTRUE：获取到了任务通知。pdFALSE：任务通知获取失败。
+    /* uint32_t ulTaskNotifyTake( BaseType_t xClearCountOnExit, TickType_t xTicksToWait ); 
+     * xClearCountOnExit：pdTRUE 在退出函数的时候任务任务通知值清零，类似二值信号量
+     * pdFALSE 在退出函数ulTaskNotifyTakeO的时候任务通知值减一，类似计数型信号量。
      */
     //获取任务通知 ,没获取到则一直等待
-		xReturn=xTaskNotifyWait(0x0,			//进入函数的时候不清除任务bit
-                            ULONG_MAX,	  //退出函数的时候清除所有的bit
-#if USE_CHAR
-                            (uint32_t *)&r_char,		  //保存任务通知值
-#else
-                            &r_num,		  //保存任务通知值
-#endif                        
-                            portMAX_DELAY);	//阻塞时间
-    if( pdTRUE == xReturn )
-#if USE_CHAR
-      printf("Receive2_Task 任务通知消息为 %s \n",r_char);                      
-#else
-      printf("Receive2_Task 任务通知消息为 %d \n",r_num);                      
-#endif  
+    ulTaskNotifyTake(pdTRUE,portMAX_DELAY);
+    
+    printf("Receive2_Task 任务通知获取成功!\n\n");
+    
 		LED2_TOGGLE;
   }
 }
@@ -272,64 +218,28 @@ static void Receive2_Task(void* parameter)
 static void Send_Task(void* parameter)
 {	 
   BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
-#if USE_CHAR
-  char test_str1[] = "this is a mail test 1";/* 邮箱消息test1 */
-  char test_str2[] = "this is a mail test 2";/* 邮箱消息test2 */
-#else
-  uint32_t send1 = 1;
-  uint32_t send2 = 2;
-#endif
-  
-
-  
   while (1)
   {
     /* KEY1 被按下 */
     if( Key_Scan(KEY1_GPIO_PORT,KEY1_GPIO_PIN) == KEY_ON )
     {
-      /* 原型:BaseType_t xTaskNotify( TaskHandle_t xTaskToNotify, 
-                                      uint32_t ulValue, 
-                                      eNotifyAction eAction ); 
-       * eNoAction = 0，通知任务而不更新其通知值。
-       * eSetBits，     设置任务通知值中的位。
-       * eIncrement，   增加任务的通知值。
-       * eSetvaluewithoverwrite，覆盖当前通知
-       * eSetValueWithoutoverwrite 不覆盖当前通知
-       * 
-       * pdFAIL：当参数eAction设置为eSetValueWithoutOverwrite的时候，
-       * 如果任务通知值没有更新成功就返回pdFAIL。
-       * pdPASS: eAction 设置为其他选项的时候统一返回pdPASS。
-      */
-      xReturn = xTaskNotify( Receive1_Task_Handle, /*任务句柄*/
-#if USE_CHAR 
-                             (uint32_t)&test_str1, /* 发送的数据，最大为4字节 */
-#else
-                              send1, /* 发送的数据，最大为4字节 */
-#endif
-                             eSetValueWithOverwrite );/*覆盖当前通知*/
-      
-      if( xReturn == pdPASS )
-        printf("Receive1_Task_Handle 任务通知消息发送成功!\r\n");
+      /* 原型:BaseType_t xTaskNotifyGive( TaskHandle_t xTaskToNotify ); */
+      xReturn = xTaskNotifyGive(Receive1_Task_Handle);
+      /* 此函数只会返回pdPASS */
+      if( xReturn == pdTRUE )
+        printf("Receive1_Task_Handle 任务通知发送成功!\r\n");
     } 
     /* KEY2 被按下 */
     if( Key_Scan(KEY2_GPIO_PORT,KEY2_GPIO_PIN) == KEY_ON )
     {
-      xReturn = xTaskNotify( Receive2_Task_Handle, /*任务句柄*/
-#if USE_CHAR 
-                             (uint32_t)&test_str2, /* 发送的数据，最大为4字节 */
-#else
-                              send2, /* 发送的数据，最大为4字节 */
-#endif
-                             eSetValueWithOverwrite );/*覆盖当前通知*/
+      xReturn = xTaskNotifyGive(Receive2_Task_Handle);
       /* 此函数只会返回pdPASS */
       if( xReturn == pdPASS )
-        printf("Receive2_Task_Handle 任务通知消息发送成功!\r\n");
+        printf("Receive2_Task_Handle 任务通知发送成功!\r\n");
     }
     vTaskDelay(20);
   }
 }
-
-
 
 /***********************************************************************
   * @ 函数名  ： BSP_Init

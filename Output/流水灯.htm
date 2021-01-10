@@ -3,7 +3,7 @@
 <title>Static Call Graph - [..\..\Output\流水灯.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image ..\..\Output\流水灯.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Sun Jan 10 21:00:44 2021
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Sun Jan 10 21:06:53 2021
 <BR><P>
 <H3>Maximum Stack Usage =        256 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1214,14 +1214,8 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericReceive
 </UL>
 
-<P><STRONG><a name="[ca]"></a>ulTaskNotifyTake</STRONG> (Thumb, 108 bytes, Stack size 16 bytes, tasks.o(.text), UNUSED)
-<BR><BR>[Calls]<UL><LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvAddCurrentTaskToDelayedList
-<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortExitCritical
-<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortEnterCritical
-</UL>
-
-<P><STRONG><a name="[63]"></a>xTaskNotifyWait</STRONG> (Thumb, 150 bytes, Stack size 24 bytes, tasks.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = xTaskNotifyWait &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
+<P><STRONG><a name="[63]"></a>ulTaskNotifyTake</STRONG> (Thumb, 108 bytes, Stack size 16 bytes, tasks.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = ulTaskNotifyTake &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvAddCurrentTaskToDelayedList
 <LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortExitCritical
@@ -1229,6 +1223,12 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[49]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Receive1_Task
 <LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Receive2_Task
+</UL>
+
+<P><STRONG><a name="[ca]"></a>xTaskNotifyWait</STRONG> (Thumb, 150 bytes, Stack size 24 bytes, tasks.o(.text), UNUSED)
+<BR><BR>[Calls]<UL><LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvAddCurrentTaskToDelayedList
+<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortExitCritical
+<LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortEnterCritical
 </UL>
 
 <P><STRONG><a name="[60]"></a>xTaskGenericNotify</STRONG> (Thumb, 230 bytes, Stack size 32 bytes, tasks.o(.text))
@@ -1357,7 +1357,7 @@ Global Symbols
 <LI><a href="#[df]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTimerIsTimerActive
 <LI><a href="#[d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvCheckForValidListAndQueue
 <LI><a href="#[cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyStateClear
-<LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ulTaskNotifyTake
+<LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyWait
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
 <LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskPrioritySet
@@ -1376,9 +1376,9 @@ Global Symbols
 <LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvIsQueueFull
 <LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvUnlockQueue
 <LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskResumeAll
-<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyWait
 <LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGenericNotify
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelete
+<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ulTaskNotifyTake
 <LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AppTaskCreate
 </UL>
 
@@ -1392,7 +1392,7 @@ Global Symbols
 <LI><a href="#[df]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTimerIsTimerActive
 <LI><a href="#[d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvCheckForValidListAndQueue
 <LI><a href="#[cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyStateClear
-<LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ulTaskNotifyTake
+<LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyWait
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
 <LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskPrioritySet
@@ -1411,9 +1411,9 @@ Global Symbols
 <LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvIsQueueFull
 <LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvUnlockQueue
 <LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskResumeAll
-<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyWait
 <LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGenericNotify
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelete
+<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ulTaskNotifyTake
 <LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AppTaskCreate
 </UL>
 
@@ -1601,7 +1601,7 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[47]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SystemInit
 </UL>
 
-<P><STRONG><a name="[4b]"></a>Send_Task</STRONG> (Thumb, 94 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[4b]"></a>Send_Task</STRONG> (Thumb, 90 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = Send_Task &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick &rArr; __2printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
@@ -1611,19 +1611,19 @@ Local Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text)
 </UL>
-<P><STRONG><a name="[4a]"></a>Receive2_Task</STRONG> (Thumb, 48 bytes, Stack size 8 bytes, main.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = Receive2_Task &rArr; xTaskNotifyWait &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
+<P><STRONG><a name="[4a]"></a>Receive2_Task</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, main.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = Receive2_Task &rArr; ulTaskNotifyTake &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
 <BR>[Calls]<UL><LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
-<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyWait
+<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ulTaskNotifyTake
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text)
 </UL>
-<P><STRONG><a name="[49]"></a>Receive1_Task</STRONG> (Thumb, 48 bytes, Stack size 8 bytes, main.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = Receive1_Task &rArr; xTaskNotifyWait &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
+<P><STRONG><a name="[49]"></a>Receive1_Task</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, main.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = Receive1_Task &rArr; ulTaskNotifyTake &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
 <BR>[Calls]<UL><LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
-<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyWait
+<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ulTaskNotifyTake
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text)
 </UL>
@@ -1775,13 +1775,13 @@ Local Symbols
 <LI><a href="#[b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vListInsert
 <LI><a href="#[ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vListInsertEnd
 </UL>
-<BR>[Called By]<UL><LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ulTaskNotifyTake
+<BR>[Called By]<UL><LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyWait
 <LI><a href="#[b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelayUntil
 <LI><a href="#[ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskPlaceOnEventListRestricted
 <LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskPlaceOnEventList
 <LI><a href="#[c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskPlaceOnUnorderedEventList
-<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskNotifyWait
 <LI><a href="#[62]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
+<LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ulTaskNotifyTake
 </UL>
 
 <P><STRONG><a name="[be]"></a>prvTaskIsTaskSuspended</STRONG> (Thumb, 76 bytes, Stack size 16 bytes, tasks.o(.text), UNUSED)
