@@ -45,3 +45,4 @@
 ..\..\output\main.o: ..\..\FreeRTOS\include\timers.h
 ..\..\output\main.o: ..\..\User\led\bsp_led.h
 ..\..\output\main.o: ..\..\User\key\bsp_key.h
+..\..\output\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\limits.h
