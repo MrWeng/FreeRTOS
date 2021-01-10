@@ -36,8 +36,7 @@
  * 这个句柄可以为NULL。
  */
 static TaskHandle_t AppTaskCreate_Handle = NULL;/* 创建任务句柄 */
-static TaskHandle_t LED_Task_Handle = NULL;/* LED_Task任务句柄 */
-static TaskHandle_t KEY_Task_Handle = NULL;/* KEY_Task任务句柄 */
+
 
 
 /********************************** 内核对象句柄 *********************************/
@@ -51,7 +50,8 @@ static TaskHandle_t KEY_Task_Handle = NULL;/* KEY_Task任务句柄 */
  * 来完成的
  * 
  */
-static EventGroupHandle_t Event_Handle =NULL;
+static TimerHandle_t Swtmr1_Handle =NULL;   /* 软件定时器句柄 */
+static TimerHandle_t Swtmr2_Handle =NULL;   /* 软件定时器句柄 */
 
 /******************************* 全局变量声明 ************************************/
 /*
@@ -63,8 +63,8 @@ static EventGroupHandle_t Event_Handle =NULL;
 /*
  * 当我们在写应用程序的时候，可能需要用到一些宏定义。
  */
-#define KEY1_EVENT  (0x01 << 0)//设置事件掩码的位0
-#define KEY2_EVENT  (0x01 << 1)//设置事件掩码的位1
+static uint32_t TmrCb_Count1 = 0; /* 记录软件定时器1回调函数执行次数 */
+static uint32_t TmrCb_Count2 = 0; /* 记录软件定时器2回调函数执行次数 */
 
 /*
 *************************************************************************
@@ -73,8 +73,8 @@ static EventGroupHandle_t Event_Handle =NULL;
 */
 static void AppTaskCreate(void);/* 用于创建任务 */
 
-static void LED_Task(void* pvParameters);/* LED_Task 任务实现 */
-static void KEY_Task(void* pvParameters);/* KEY_Task 任务实现 */
+static void Swtmr1_Callback(void* parameter);
+static void Swtmr2_Callback(void* parameter);
 
 static void BSP_Init(void);/* 用于初始化板载相关资源 */
 
@@ -121,34 +121,60 @@ int main(void)
   **********************************************************************/
 static void AppTaskCreate(void)
 {
-  BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+
   
   taskENTER_CRITICAL();           //进入临界区
-  
- /* 创建 Event_Handle */
-  Event_Handle = xEventGroupCreate();	 
-  if(NULL != Event_Handle)
-    printf("Event_Handle 事件创建成功!\r\n");
-    
-  /* 创建LED_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )LED_Task, /* 任务入口函数 */
-                        (const char*    )"LED_Task",/* 任务名字 */
-                        (uint16_t       )512,   /* 任务栈大小 */
-                        (void*          )NULL,	/* 任务入口函数参数 */
-                        (UBaseType_t    )2,	    /* 任务的优先级 */
-                        (TaskHandle_t*  )&LED_Task_Handle);/* 任务控制块指针 */
-  if(pdPASS == xReturn)
-    printf("创建LED_Task任务成功!\r\n");
-  
-  /* 创建KEY_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )KEY_Task,  /* 任务入口函数 */
-                        (const char*    )"KEY_Task",/* 任务名字 */
-                        (uint16_t       )512,  /* 任务栈大小 */
-                        (void*          )NULL,/* 任务入口函数参数 */
-                        (UBaseType_t    )3, /* 任务的优先级 */
-                        (TaskHandle_t*  )&KEY_Task_Handle);/* 任务控制块指针 */ 
-  if(pdPASS == xReturn)
-    printf("创建KEY_Task任务成功!\n");
+  /************************************************************************************
+   * 创建软件周期定时器
+   * 函数原型
+   * TimerHandle_t xTimerCreate(	const char * const pcTimerName,
+								const TickType_t xTimerPeriodInTicks,
+								const UBaseType_t uxAutoReload,
+								void * const pvTimerID,
+                TimerCallbackFunction_t pxCallbackFunction )
+    * @uxAutoReload : pdTRUE为周期模式，pdFALS为单次模式
+   * 单次定时器，周期(1000个时钟节拍)，周期模式
+   *************************************************************************************/
+  Swtmr1_Handle=xTimerCreate((const char*		)"AutoReloadTimer",
+                            (TickType_t			)1000,/* 定时器周期 1000(tick) */
+                            (UBaseType_t		)pdTRUE,/* 周期模式 */
+                            (void*				)1,/* 为每个计时器分配一个索引的唯一ID */
+                            (TimerCallbackFunction_t)Swtmr1_Callback); 
+  if(Swtmr1_Handle != NULL)                          
+  {
+    /***********************************************************************************
+     * xTicksToWait:如果在调用xTimerStart()时队列已满，则以tick为单位指定调用任务应保持
+     * 在Blocked(阻塞)状态以等待start命令成功发送到timer命令队列的时间。 
+     * 如果在启动调度程序之前调用xTimerStart()，则忽略xTicksToWait。在这里设置等待时间为0.
+     **********************************************************************************/
+    xTimerStart(Swtmr1_Handle,0);	//开启周期定时器
+  }                            
+  /************************************************************************************
+   * 创建软件周期定时器
+   * 函数原型
+   * TimerHandle_t xTimerCreate(	const char * const pcTimerName,
+								const TickType_t xTimerPeriodInTicks,
+								const UBaseType_t uxAutoReload,
+								void * const pvTimerID,
+                TimerCallbackFunction_t pxCallbackFunction )
+    * @uxAutoReload : pdTRUE为周期模式，pdFALS为单次模式
+   * 单次定时器，周期(5000个时钟节拍)，单次模式
+   *************************************************************************************/
+	Swtmr2_Handle=xTimerCreate((const char*			)"OneShotTimer",
+                             (TickType_t			)5000,/* 定时器周期 5000(tick) */
+                             (UBaseType_t			)pdFALSE,/* 单次模式 */
+                             (void*					  )2,/* 为每个计时器分配一个索引的唯一ID */
+                             (TimerCallbackFunction_t)Swtmr2_Callback); 
+  if(Swtmr2_Handle != NULL)
+  {
+   /***********************************************************************************
+   * xTicksToWait:如果在调用xTimerStart()时队列已满，则以tick为单位指定调用任务应保持
+   * 在Blocked(阻塞)状态以等待start命令成功发送到timer命令队列的时间。 
+   * 如果在启动调度程序之前调用xTimerStart()，则忽略xTicksToWait。在这里设置等待时间为0.
+   **********************************************************************************/   
+    xTimerStart(Swtmr2_Handle,0);	//开启周期定时器
+  } 
+ 
   
   vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
   
@@ -157,76 +183,45 @@ static void AppTaskCreate(void)
 
 
 
-/**********************************************************************
-  * @ 函数名  ： LED_Task
-  * @ 功能说明： LED_Task任务主体
-  * @ 参数    ：   
+
+/***********************************************************************
+  * @ 函数名  ： Swtmr1_Callback
+  * @ 功能说明： 软件定时器1 回调函数，打印回调函数信息&当前系统时间
+  *              软件定时器请不要调用阻塞函数，也不要进行死循环，应快进快出
+  * @ 参数    ： 无  
   * @ 返回值  ： 无
-  ********************************************************************/
-static void LED_Task(void* parameter)
-{	
-  EventBits_t r_event;  /* 定义一个事件接收变量 */
-  /* 任务都是一个无限循环，不能返回 */
-  while (1)
-	{
-    /*******************************************************************
-     * 等待接收事件标志 
-     * 
-     * 如果xClearOnExit设置为pdTRUE，那么在xEventGroupWaitBits()返回之前，
-     * 如果满足等待条件（如果函数返回的原因不是超时），那么在事件组中设置
-     * 的uxBitsToWaitFor中的任何位都将被清除。 
-     * 如果xClearOnExit设置为pdFALSE，
-     * 则在调用xEventGroupWaitBits()时，不会更改事件组中设置的位。
-     *
-     * xWaitForAllBits如果xWaitForAllBits设置为pdTRUE，则当uxBitsToWaitFor中
-     * 的所有位都设置或指定的块时间到期时，xEventGroupWaitBits()才返回。 
-     * 如果xWaitForAllBits设置为pdFALSE，则当设置uxBitsToWaitFor中设置的任何
-     * 一个位置1 或指定的块时间到期时，xEventGroupWaitBits()都会返回。 
-     * 阻塞时间由xTicksToWait参数指定。          
-      *********************************************************/
-    r_event = xEventGroupWaitBits(Event_Handle,  /* 事件对象句柄 */
-                                  KEY1_EVENT|KEY2_EVENT,/* 接收线程感兴趣的事件 */
-                                  pdTRUE,   /* 退出时清除事件位 */
-                                  pdTRUE,   /* 满足感兴趣的所有事件 */
-                                  portMAX_DELAY);/* 指定超时事件,一直等 */
-                        
-    if((r_event & (KEY1_EVENT|KEY2_EVENT)) == (KEY1_EVENT|KEY2_EVENT)) 
-    {
-      /* 如果接收完成并且正确 */
-      printf ( "KEY1与KEY2都按下\n");		
-      LED1_TOGGLE;       //LED1	反转
-    }
-    else
-      printf ( "事件错误！\n");	
-  }
+  **********************************************************************/
+static void Swtmr1_Callback(void* parameter)
+{		
+  TickType_t tick_num1;
+
+  TmrCb_Count1++;						/* 每回调一次加一 */
+
+  tick_num1 = xTaskGetTickCount();	/* 获取滴答定时器的计数值 */
+  
+  LED1_TOGGLE;
+  
+  printf("Swtmr1_Callback函数执行 %d 次\n", TmrCb_Count1);
+  printf("滴答定时器数值=%d\n", tick_num1);
 }
 
-/**********************************************************************
-  * @ 函数名  ： KEY_Task
-  * @ 功能说明： KEY_Task任务主体
-  * @ 参数    ：   
+/***********************************************************************
+  * @ 函数名  ： Swtmr2_Callback
+  * @ 功能说明： 软件定时器2 回调函数，打印回调函数信息&当前系统时间
+  *              软件定时器请不要调用阻塞函数，也不要进行死循环，应快进快出
+  * @ 参数    ： 无  
   * @ 返回值  ： 无
-  ********************************************************************/
-static void KEY_Task(void* parameter)
-{	 
-    /* 任务都是一个无限循环，不能返回 */
-  while (1)
-  {
-    if( Key_Scan(KEY1_GPIO_PORT,KEY1_GPIO_PIN) == KEY_ON )       //如果KEY2被单击
-		{
-      printf ( "KEY1被按下\n" );
-			/* 触发一个事件1 */
-			xEventGroupSetBits(Event_Handle,KEY1_EVENT);  					
-		}
-    
-		if( Key_Scan(KEY2_GPIO_PORT,KEY2_GPIO_PIN) == KEY_ON )       //如果KEY2被单击
-		{
-      printf ( "KEY2被按下\n" );	
-			/* 触发一个事件2 */
-			xEventGroupSetBits(Event_Handle,KEY2_EVENT); 				
-		}
-		vTaskDelay(20);     //每20ms扫描一次		
-  }
+  **********************************************************************/
+static void Swtmr2_Callback(void* parameter)
+{	
+  TickType_t tick_num2;
+
+  TmrCb_Count2++;						/* 每回调一次加一 */
+
+  tick_num2 = xTaskGetTickCount();	/* 获取滴答定时器的计数值 */
+
+  printf("Swtmr2_Callback函数执行 %d 次\n", TmrCb_Count2);
+  printf("滴答定时器数值=%d\n", tick_num2);
 }
 /***********************************************************************
   * @ 函数名  ： BSP_Init
